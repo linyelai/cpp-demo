@@ -1,5 +1,70 @@
-﻿################################################################################
-# 此 .gitignore 文件已由 Microsoft(R) Visual Studio 自动创建。
-################################################################################
+﻿## 通用开发文件 ##
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
 
-/socket-poll-lession/socket-poll-lession.sln
+## 编译输出 ##
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]uild/
+[Bb]uildOutput/
+
+## 打包目录 ##
+packages/
+[Nn]u[Gg]et[Bb]ackup/
+[Nn]u[Gg]et[Cc]ache/
+
+## Visual Studio 文件 ##
+.vs/
+.vscode/
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.opensdf
+*.sdf
+*.VC.db
+*.VC.VC.opendb
+*.db
+_ReSharper.*
+*.psess
+*.vsp
+*.vspx
+*.sap
+
+## 测试文件 ##
+TestResult.xml
+*.trx
+*.VisualState.xml
+
+## 其他 ##
+*.log
+*.tlog
+*.cache
+*.ilk
+*.pdb
+*.lib
+*.exp
+*.idb
+*.ipch
+*.iobj
+*.ipdb
+*.msi
+*.nupkg
+*.ncrunchsolution
+*.dotCover
+*.lastbuildstate
+*.pyc
+__pycache__/
+*.bak
+*.backup
+*.orig
+*.sass-cache/
+_Chutzpah*
