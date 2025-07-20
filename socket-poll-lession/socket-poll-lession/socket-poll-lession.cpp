@@ -2,18 +2,49 @@
 #include <ws2tcpip.h>
 #include <stdio.h>
 #include <vector>
+#include <windows.h>
+#include <stdio.h>
+#include <stdlib.h>
 #pragma comment(lib, "ws2_32.lib")
 
 #define MAX_CLIENTS 64
 
-int main() {
+WSAPOLLFD fds[MAX_CLIENTS];
+int nfds = 1;
+SOCKET listenSock = INVALID_SOCKET;
+//发生消息的线程函数
+DWORD WINAPI sendMsg(LPVOID lpParam) {
+ 
+    while (true) {
+        
+        char msg[128];
+       fgets(msg, sizeof(msg), stdin);
+        for (int i = 0; i < nfds; i++) {
+            if (fds[i].fd == listenSock||fds[i].fd==0) {
+                continue;
+            }
+           int result =  send(fds[i].fd, msg, sizeof(msg), 0);
+           if (result < 0) {
+               printf("send error:%d\n", WSAGetLastError());
+               break;
+           }
 
+        }
+    }
+    
+    return 0;
+}
+// 用于发送消息的线程句柄
+HANDLE busThread;
+
+int main() {
+  
     WSADATA wsa;
     //初始化
     WSAStartup(MAKEWORD(2, 2), &wsa);
 
     // 创建监听套接字
-    SOCKET listenSock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    listenSock =  socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     //初始化
     sockaddr_in addr = { 0 };
     // 设置为网络
@@ -26,11 +57,16 @@ int main() {
     bind(listenSock, (SOCKADDR*)&addr, sizeof(addr));
     //监听socket
     listen(listenSock, SOMAXCONN);
-
+    // 创建线程，用于发生消息
+    busThread = CreateThread(NULL, 0, sendMsg, NULL, 0, NULL);
+    if (busThread == NULL) {
+        fprintf(stderr, "CreateThread failed (%d)\n", GetLastError());
+        return 1;
+    }
     // 初始化 pollfd 数组
-    WSAPOLLFD fds[MAX_CLIENTS];
+   
     //std::vector<WSAPOLLFD> fdvector(MAX_CLIENTS);
-    int nfds = 1;  // 初始只有监听套接字
+     // 初始只有监听套接字
  /*   WSAPOLLFD serverFD;*/
     fds[0].fd = listenSock;
     //POLLRDNORM 普通数据可读
@@ -50,7 +86,8 @@ int main() {
         int ret = WSAPoll(fds, nfds, -1);
         if (ret == SOCKET_ERROR) {
             printf("WSAPoll error: %d\n", WSAGetLastError());
-            break;
+            Sleep(1000);
+            continue;
         }
 
         // 检查所有套接字
@@ -73,27 +110,32 @@ int main() {
                 }
             }
             // 客户端套接字有数据可读
-            else{
+            else if(fds[i].revents & POLLRDNORM){
                 char buf[1024];
                 int bytes = recv(fds[i].fd, buf, sizeof(buf), 0);
-                char resp[] = "HTTP/1.1 200 OK\r\nContent-Type:text/application;charset=utf-8\r\n\r\nHello, world!";
-                printf("resp:%i", sizeof(resp));
                 if (bytes > 0) {
-                    printf("%s", buf);
-                    send(fds[i].fd, resp, sizeof(resp), 0); // 回显数据
+                    int bytes = recv(fds[i].fd, buf, sizeof(buf), 0);
+                    printf(" %s", buf);
+                    //send(fds[i].fd, resp, sizeof(resp), 0); // 回显数据
                   
                 }
-                    closesocket(fds[i].fd);
-                    //将最后一个放到当前位置，覆盖当前的描述符，从而删除描述符
-                    fds[i] = fds[nfds - 1];
-                    nfds--;
-                    i--; // 重新检查当前位置
-                
-            } 
-         
-        }
-    }
+                //else {
+                //    closesocket(fds[i].fd);
+                //    //将最后一个放到当前位置，覆盖当前的描述符，从而删除描述符
+                //    fds[i] = fds[nfds - 1];
+                //    nfds--;
+                //    i--; // 重新检查当前位置
+                //    printf("error");
 
+                //}
+
+            }
+            
+            
+        }
+
+                }
+                   
     // 清理
     WSACleanup();
     return 0;
